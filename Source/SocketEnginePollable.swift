@@ -86,7 +86,7 @@ extension SocketEnginePollable {
         req.httpBody = postData
         req.setValue(String(postData.count), forHTTPHeaderField: "Content-Length")
         
-        return req as URLRequest
+        return req
     }
     
     public func doPoll() {
@@ -129,9 +129,7 @@ extension SocketEnginePollable {
             DefaultSocketLogger.Logger.log("Got polling response", type: "SocketEnginePolling")
             
             if let str = String(data: data!, encoding: String.Encoding.utf8) {
-                this.parseQueue.async {
-                    this.parsePollingMessage(str)
-                }
+                this.parsePollingMessage(str)
             }
             
             this.waitingForPoll = false
@@ -173,11 +171,9 @@ extension SocketEnginePollable {
             
             this.waitingForPost = false
             
-            this.emitQueue.async {
-                if !this.fastUpgrade {
-                    this.flushWaitingForPost()
-                    this.doPoll()
-                }
+            if !this.fastUpgrade {
+                this.flushWaitingForPost()
+                this.doPoll()
             }
         }
     }
@@ -189,11 +185,9 @@ extension SocketEnginePollable {
         
         while reader.hasNext {
             if let n = Int(reader.readUntilOccurence(of: ":")) {
-                let str = reader.read(count: n)
-                
-                handleQueue.async { self.parseEngineMessage(str, fromPolling: true) }
+                parseEngineMessage(reader.read(count: n), fromPolling: true)
             } else {
-                handleQueue.async { self.parseEngineMessage(str, fromPolling: true) }
+                parseEngineMessage(str, fromPolling: true)
                 break
             }
         }
